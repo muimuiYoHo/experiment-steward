@@ -36,6 +36,20 @@ export class Steward {
     return fs;
   }
 
+  /** Checks a ship decision against the latest results without recording anything. */
+  checkShip(id: string, decision: ShipDecision, override?: string): void {
+    const record = this.d.store.load(id);
+    if (decision.kind !== 'variant' || override?.trim()) return;
+    const results = record.lastResults as ResultsResponse | undefined;
+    const interp = results ? interpret(record.plan, results) : undefined;
+    if (!record.plan.variants.some((v) => v.key === decision.key)) throw new GateError(`unknown variant "${decision.key}"`);
+    if (interp?.canShipVariant !== decision.key) {
+      throw new GateError(
+        `results do not support shipping "${decision.key}" (verdict: ${interp?.overall.kind ?? 'no-results'}). Keep collecting data, choose control, or pass --override "<reason>"`,
+      );
+    }
+  }
+
   approve(id: string, approvedBy: string, opts: { decision?: ShipDecision; override?: string } = {}): Approval {
     const record = this.d.store.load(id);
     const gate = record.state === 'draft' ? 'create' : record.state === 'created' ? 'start' : record.state === 'running' ? 'ship' : null;

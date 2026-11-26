@@ -188,6 +188,7 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
         const gate = pendingGate(r.state);
         if (!gate) throw new GateError(`nothing is waiting for approval while the plan is "${r.state}"`);
         const decision = gate === 'ship' ? parseDecision(o.decision) : undefined;
+        if (decision) steward.checkShip(r.plan.id, decision, o.override);
         io.out(approvalCard(r, gate));
         if (decision) io.out(`Decision to approve: ${decisionText(decision)}${o.override ? `  (override: ${o.override})` : ''}`);
         if (!io.isTTY) {
@@ -259,10 +260,11 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
           `Flagsmith results as of ${interp.asOf ?? 'never'}${interp.isFinal ? ' (final)' : ''}` +
             (refreshed ? ' — freshly refreshed' : throttled ? ` — cached (${throttled})` : nextRefreshAt ? ` — cached; next refresh allowed at ${nextRefreshAt.toISOString()}` : ''),
         );
-        io.out(renderInterpretation(interp));
-        if (excludedIdentities !== undefined) {
-          io.out(`  · identities served more than one variation (quarantined by Flagsmith): ${excludedIdentities}${excludedIdentities > 0 ? '  ⚠ check that the identifier is stable' : ''}`);
-        }
+        const extra =
+          excludedIdentities === undefined
+            ? []
+            : [`  · identities served more than one variation (quarantined): ${excludedIdentities}${excludedIdentities > 0 ? '  ⚠ check that the identifier is stable' : ' (ok)'}`];
+        io.out(renderInterpretation(interp, extra));
         io.out(next(record));
         return 0;
       }

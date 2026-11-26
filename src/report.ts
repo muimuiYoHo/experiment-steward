@@ -144,7 +144,7 @@ const pct = (x: number | null | undefined, digits = 1): string =>
   x === null || x === undefined ? '—' : `${(x * 100).toFixed(digits)}%`;
 const signed = (x: number | undefined): string => (x === undefined ? '—' : `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`);
 
-export function renderInterpretation(i: Interpretation): string {
+export function renderInterpretation(i: Interpretation, extraNotes: string[] = []): string {
   if (i.overall.kind === 'no-results') return i.recommendation;
   const head = ['arm', 'planned', 'identities', 'conversions', 'rate', 'lift', '95% interval', 'win prob', 'verdict'];
   const body = i.rows.map((r) => [
@@ -163,6 +163,6 @@ export function renderInterpretation(i: Interpretation): string {
   const out = [line(head), widths.map((w) => '─'.repeat(w)).join('  '), ...body.map(line)];
   for (const r of i.rows) if (r.note) out.push(`  · ${r.key}: ${r.note}`);
   out.push(`  · sample ratio check: ${i.srmPValue === null ? 'not reported by Flagsmith yet' : `p=${i.srmPValue.toPrecision(2)}${i.srmPValue < SRM_P ? '  ⚠ MISMATCH' : ' (ok)'}`}`);
-  out.push('', `Verdict: ${i.recommendation}`);
+  out.push(...extraNotes, '', `Verdict: ${i.recommendation}`);
   return out.join('\n');
 }

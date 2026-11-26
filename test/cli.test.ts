@@ -62,3 +62,18 @@ test('host-scoped key names match the Flagsmith CLI convention', () => {
   assert.equal(hostScopedKeyName('http://localhost:8000'), 'FLAGSMITH_API_KEY_localhost_8000');
   assert.equal(hostScopedKeyName('https://flags.example.com'), 'FLAGSMITH_API_KEY_flags_example_com');
 });
+
+test('an unsupported ship decision is blocked before the approval prompt', async () => {
+  const { Steward } = await import('../src/steward.ts');
+  const h = harness('should-not-be-asked', true);
+  await h.run(PLAN);
+  const store = new Store(h.dir);
+  const r = store.load('checkout-button-copy');
+  r.state = 'running';
+  store.save(r);
+  const s = new Steward({ store, flagsmith: () => { throw new Error('no network in this test'); } });
+  assert.throws(() => s.checkShip('checkout-button-copy', { kind: 'variant', key: 'buy_now' }), /do not support shipping/);
+  assert.doesNotThrow(() => s.checkShip('checkout-button-copy', { kind: 'control' }));
+  assert.equal(await h.run(['approve', 'checkout-button-copy', '--decision', 'buy_now']), 3);
+  assert.doesNotMatch(h.out.join('\n'), /APPROVAL 3\/3/);
+});

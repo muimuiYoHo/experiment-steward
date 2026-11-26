@@ -104,12 +104,12 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
       'approved-to-create': `Next: steward apply ${r.plan.id}`,
       created: `Next (human): steward approve ${r.plan.id}   → unlocks start`,
       'approved-to-start': `Next: steward start ${r.plan.id}`,
-      running: `Next: steward traffic / results ${r.plan.id}, then (human) steward approve ${r.plan.id} --decision ...`,
+      running: `Next: traffic + results; then a human approves the ship decision (--decision <key>|control|disable)`,
       'approved-to-ship': `Next: steward ship ${r.plan.id}`,
       ended: 'Experiment ended.',
       rejected: 'Plan rejected. Draft a new one.',
     };
-    return `${gate ? '⏸ ' : ''}${hint[r.state]}`;
+    return `» ${hint[r.state]}`;
   };
 
   try {
@@ -296,7 +296,7 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
     }
   } catch (e) {
     const err = e as Error;
-    const label = err instanceof GateError ? '✋ BLOCKED' : err instanceof PlanError ? '✗ PLAN' : '✗ ERROR';
+    const label = err instanceof GateError ? '■ BLOCKED' : err instanceof PlanError ? '✗ PLAN' : '✗ ERROR';
     io.err(`${label}: ${err.message}`);
     return err instanceof GateError ? 3 : 1;
   }

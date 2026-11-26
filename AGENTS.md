@@ -22,4 +22,4 @@ change to Flagsmith.
 7. Ask the human for the ship decision (`steward approve <id> --decision <key>|control|disable`),
    then run `npx steward ship <id>`.
 
-If any command prints `✋ BLOCKED`, show the message to the human. Do not work around it.
+If any command prints `■ BLOCKED`, show the message to the human. Do not work around it.

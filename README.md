@@ -56,7 +56,7 @@ mistakes for you. An agent can drive all of it, but it cannot approve on your be
 Safety properties (all covered by tests):
 
 - **No approval, no write.** Every write re-checks, immediately before calling Flagsmith, that the
-  plan is in the right `approved-to-*` state. Without it the command stops with `✋ BLOCKED` and makes
+  plan is in the right `approved-to-*` state. Without it the command stops with `■ BLOCKED` and makes
   zero API calls.
 - **Approvals are bound to the exact plan.** An approval stores the SHA-256 of the plan. If anything in
   the plan changes afterwards (say, an agent "adjusts" the split), the approval no longer matches and
@@ -166,7 +166,7 @@ steward plan --name "Checkout button copy" --flag checkout_cta --control-value C
   --hypothesis "A direct label (Buy now) increases completed checkouts"
 # or: steward plan --file plans/example-cta-copy.json
 
-steward apply checkout-button-copy        # ✋ BLOCKED: not approved
+steward apply checkout-button-copy        # ■ BLOCKED: not approved
 steward approve checkout-button-copy      # card 1/3, type the code shown on it
 STEWARD_TRANSPORT=cli steward apply checkout-button-copy
 
@@ -181,7 +181,7 @@ steward ship checkout-button-copy
 steward log checkout-button-copy          # approvals + every API call
 ```
 
-What you should see: the card and "Nothing has been written to Flagsmith" after `plan`; `✋ BLOCKED`
+What you should see: the card and "Nothing has been written to Flagsmith" after `plan`; `■ BLOCKED`
 before approval; four `✓ created ...` receipts and a dashboard link after `apply`; status `running` after
 `start`; per-arm exposure counts after `traffic`; a results table after `results` (the same numbers as
 the experiment page in the Flagsmith dashboard); after `ship`, the experiment is *Completed* in Flagsmith

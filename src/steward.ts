@@ -3,7 +3,7 @@
 // interrupted run can resume without duplicating anything.
 import { controlAllocation, planHash, type Plan } from './plan.ts';
 import { GateError, markDone, requireApproval, recordApproval, type Approval, type ShipDecision } from './gates.ts';
-import type { Flagsmith, ResultsResponse } from './flagsmith.ts';
+import { FlagsmithApiError, type Flagsmith, type ResultsResponse } from './flagsmith.ts';
 import { interpret, type Interpretation } from './report.ts';
 import type { PlanRecord, Store } from './store.ts';
 
@@ -150,7 +150,7 @@ export class Steward {
   }
 
   /** Read-only for flag configuration: refreshes (at most every 5 minutes) and reads results. */
-  async results(id: string, opts: { refresh?: boolean; waitMs?: number } = {}): Promise<{ record: PlanRecord; interp: Interpretation; refreshed: boolean; nextRefreshAt?: Date }> {
+  async results(id: string, opts: { refresh?: boolean; waitMs?: number } = {}): Promise<{ record: PlanRecord; interp: Interpretation; refreshed: boolean; nextRefreshAt?: Date; throttled?: string }> {
     const record = this.d.store.load(id);
     const expId = record.resources.experimentId;
     if (expId === undefined) throw new GateError('no experiment yet: approve and apply the plan first');
@@ -161,13 +161,22 @@ export class Steward {
     let refreshed = false;
     let res: ResultsResponse;
     try {
+      let throttled: string | undefined;
       if (opts.refresh !== false && allowed && record.state !== 'ended') {
-        await fs.refreshResults(expId);
-        record.lastRefreshAt = now.toISOString();
-        refreshed = true;
+        try {
+          await fs.refreshResults(expId);
+          record.lastRefreshAt = now.toISOString();
+          refreshed = true;
+        } catch (e) {
+          // Flagsmith allows one refresh per 5 minutes and answers 429 otherwise: show cached results.
+          if (!(e instanceof FlagsmithApiError) || e.status !== 429) throw e;
+          throttled = (e.body as { detail?: string } | null)?.detail ?? 'refresh throttled by Flagsmith';
+        }
+      }
+      if (refreshed) {
         res = await fs.getResults(expId);
         const deadline = Date.now() + (opts.waitMs ?? 60_000);
-        while (!isFresh(res, record.lastRefreshAt) && Date.now() < deadline) {
+        while (!isFresh(res, record.lastRefreshAt!) && Date.now() < deadline) {
           await this.d.sleep(2000);
           res = await fs.getResults(expId);
         }
@@ -180,6 +189,7 @@ export class Steward {
         interp: interpret(record.plan, res),
         refreshed,
         nextRefreshAt: last && !allowed ? new Date(last.getTime() + REFRESH_INTERVAL_MS) : undefined,
+        throttled,
       };
     } finally {
       this.d.store.save(record);

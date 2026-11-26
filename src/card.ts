@@ -5,7 +5,7 @@ import type { PlanRecord } from './store.ts';
 import { interpret, renderInterpretation } from './report.ts';
 import type { ResultsResponse } from './flagsmith.ts';
 
-const WIDTH = 74;
+const WIDTH = 80;
 
 export function box(title: string, lines: string[]): string {
   const top = `┌─ ${title} ${'─'.repeat(Math.max(0, WIDTH - title.length - 4))}┐`;
@@ -15,16 +15,18 @@ export function box(title: string, lines: string[]): string {
 
 function wrap(line: string, width: number): string[] {
   if ([...line].length <= width) return [line];
-  const indent = /^\s*/.exec(line)![0] + '  ';
+  const lead = /^\s*/.exec(line)![0];
   const out: string[] = [];
-  let cur = '';
-  for (const word of line.split(' ')) {
-    if ([...(cur + ' ' + word)].length > width && cur.trim()) {
+  let cur = lead;
+  for (const word of line.slice(lead.length).split(' ')) {
+    const fresh = cur.length === lead.length || cur === lead + '    ';
+    const candidate = fresh ? cur + word : `${cur} ${word}`;
+    if ([...candidate].length > width && !fresh) {
       out.push(cur);
-      cur = indent + word;
-    } else cur = cur ? `${cur} ${word}` : word;
+      cur = lead + '    ' + word;
+    } else cur = candidate;
   }
-  if (cur) out.push(cur);
+  out.push(cur);
   return out;
 }
 

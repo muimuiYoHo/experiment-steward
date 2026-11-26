@@ -254,10 +254,10 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
       }
 
       case 'results': {
-        const { interp, refreshed, nextRefreshAt, record } = await steward.results(need(), { refresh: !o['no-refresh'] });
+        const { interp, refreshed, nextRefreshAt, record, throttled } = await steward.results(need(), { refresh: !o['no-refresh'] });
         io.out(
           `Flagsmith results as of ${interp.asOf ?? 'never'}${interp.isFinal ? ' (final)' : ''}` +
-            (refreshed ? ' — freshly refreshed' : nextRefreshAt ? ` — cached; next refresh allowed at ${nextRefreshAt.toISOString()}` : ''),
+            (refreshed ? ' — freshly refreshed' : throttled ? ` — cached (${throttled})` : nextRefreshAt ? ` — cached; next refresh allowed at ${nextRefreshAt.toISOString()}` : ''),
         );
         io.out(renderInterpretation(interp));
         io.out(next(record));
@@ -268,8 +268,18 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
         const { record, decision, served } = await steward.ship(need());
         io.out(`✓ Experiment ${record.resources.experimentId} ended with decision ${decisionText(decision)}.`);
         if (served && typeof served === 'object') {
-          const s = served as { enabled: boolean; feature_state_value: unknown };
-          io.out(`  Flag "${record.plan.flag.name}" now: enabled=${s.enabled}, value=${JSON.stringify(s.feature_state_value)}`);
+          const s = served as { enabled: boolean; feature_state_value: unknown; multivariate_feature_state_values?: { multivariate_feature_option: number; percentage_allocation: number }[] };
+          const byId = new Map(Object.entries(record.resources.variantIds ?? {}).map(([k, v]) => [v, k]));
+          const alloc = (s.multivariate_feature_state_values ?? []).filter((m) => m.percentage_allocation > 0);
+          io.out(`  Flagsmith now serves flag "${record.plan.flag.name}" (enabled=${s.enabled}):`);
+          for (const m of alloc) {
+            const key = byId.get(m.multivariate_feature_option) ?? `option ${m.multivariate_feature_option}`;
+            const value = record.plan.variants.find((v) => v.key === key)?.value;
+            io.out(`    ${m.percentage_allocation}% of identified users → ${key}${value ? ` ("${value}")` : ''}`);
+          }
+          const rest = 100 - alloc.reduce((t, m) => t + m.percentage_allocation, 0);
+          if (rest > 0) io.out(`    ${rest}% of identified users → control (${JSON.stringify(s.feature_state_value)})`);
+          io.out(`    unidentified requests → ${JSON.stringify(s.feature_state_value)}`);
         }
         io.out(next(record));
         return 0;

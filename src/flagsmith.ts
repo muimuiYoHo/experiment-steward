@@ -148,7 +148,7 @@ export class Flagsmith {
     this.project = projectId;
   }
 
-  private async call<T>(method: string, path: string, body?: unknown, ok: number[] = [200, 201, 204]): Promise<T> {
+  private async call<T>(method: string, path: string, body?: unknown, ok: number[] = [200, 201, 202, 204]): Promise<T> {
     const res = await this.transport.request<T>(method, path, body);
     this.onCall(method, path, res.status);
     if (!ok.includes(res.status)) throw new FlagsmithApiError(method, path, res.status, res.body);

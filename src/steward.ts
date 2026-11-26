@@ -150,7 +150,7 @@ export class Steward {
   }
 
   /** Read-only for flag configuration: refreshes (at most every 5 minutes) and reads results. */
-  async results(id: string, opts: { refresh?: boolean; waitMs?: number } = {}): Promise<{ record: PlanRecord; interp: Interpretation; refreshed: boolean; nextRefreshAt?: Date; throttled?: string }> {
+  async results(id: string, opts: { refresh?: boolean; waitMs?: number } = {}): Promise<{ record: PlanRecord; interp: Interpretation; refreshed: boolean; nextRefreshAt?: Date; throttled?: string; excludedIdentities?: number }> {
     const record = this.d.store.load(id);
     const expId = record.resources.experimentId;
     if (expId === undefined) throw new GateError('no experiment yet: approve and apply the plan first');
@@ -167,6 +167,7 @@ export class Steward {
           await fs.refreshResults(expId);
           record.lastRefreshAt = now.toISOString();
           refreshed = true;
+          await fs.refreshExposures(expId).catch(() => undefined); // best effort; same 5-minute limit
         } catch (e) {
           // Flagsmith allows one refresh per 5 minutes and answers 429 otherwise: show cached results.
           if (!(e instanceof FlagsmithApiError) || e.status !== 429) throw e;
@@ -184,12 +185,15 @@ export class Steward {
         res = await fs.getResults(expId);
       }
       record.lastResults = res;
+      const exposures = await fs.getExposures(expId).catch(() => undefined);
+      const excludedIdentities = exposures?.exposures?.payload?.excluded_identities;
       return {
         record,
         interp: interpret(record.plan, res),
         refreshed,
         nextRefreshAt: last && !allowed ? new Date(last.getTime() + REFRESH_INTERVAL_MS) : undefined,
         throttled,
+        excludedIdentities,
       };
     } finally {
       this.d.store.save(record);

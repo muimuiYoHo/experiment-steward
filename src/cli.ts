@@ -254,12 +254,15 @@ export async function main(argv: string[], io: Io = defaultIo(), cfg: Config = l
       }
 
       case 'results': {
-        const { interp, refreshed, nextRefreshAt, record, throttled } = await steward.results(need(), { refresh: !o['no-refresh'] });
+        const { interp, refreshed, nextRefreshAt, record, throttled, excludedIdentities } = await steward.results(need(), { refresh: !o['no-refresh'] });
         io.out(
           `Flagsmith results as of ${interp.asOf ?? 'never'}${interp.isFinal ? ' (final)' : ''}` +
             (refreshed ? ' — freshly refreshed' : throttled ? ` — cached (${throttled})` : nextRefreshAt ? ` — cached; next refresh allowed at ${nextRefreshAt.toISOString()}` : ''),
         );
         io.out(renderInterpretation(interp));
+        if (excludedIdentities !== undefined) {
+          io.out(`  · identities served more than one variation (quarantined by Flagsmith): ${excludedIdentities}${excludedIdentities > 0 ? '  ⚠ check that the identifier is stable' : ''}`);
+        }
         io.out(next(record));
         return 0;
       }

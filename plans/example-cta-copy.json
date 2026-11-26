@@ -1,0 +1,16 @@
+{
+  "id": "checkout-button-copy",
+  "name": "Checkout button copy",
+  "hypothesis": "A more direct label (\"Buy now\") increases completed checkouts because it reads as one step, not two.",
+  "flag": { "name": "checkout_cta", "controlValue": "Checkout", "description": "Label on the cart's primary button" },
+  "variants": [{ "key": "buy_now", "value": "Buy now", "allocation": 50 }],
+  "metric": {
+    "name": "Checkout completed",
+    "event": "checkout_completed",
+    "aggregation": "occurrence",
+    "direction": "up",
+    "expectedDirection": "increase"
+  },
+  "rolloutPercentage": 100,
+  "draftedBy": "AI coding agent"
+}

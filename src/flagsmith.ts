@@ -134,6 +134,13 @@ export interface ResultsResponse {
   } | null;
 }
 
+export interface ExposuresResponse {
+  exposures: {
+    as_of: string | null;
+    payload: { excluded_identities: number; timeseries?: unknown } | null;
+  } | null;
+}
+
 export type CallLog = (method: string, path: string, status: number) => void;
 
 export class Flagsmith {
@@ -212,6 +219,12 @@ export class Flagsmith {
   }
   getResults(id: number): Promise<ResultsResponse> {
     return this.call('GET', this.envPath(`experiments/${id}/results/`));
+  }
+  refreshExposures(id: number): Promise<unknown> {
+    return this.call('POST', this.envPath(`experiments/${id}/exposures/refresh/`));
+  }
+  getExposures(id: number): Promise<ExposuresResponse> {
+    return this.call('GET', this.envPath(`experiments/${id}/exposures/`));
   }
   completeExperiment(id: number, decision: 'control' | 'variant' | 'disable', variantId?: number): Promise<Experiment> {
     const body: Record<string, unknown> = { rollout_decision: decision };

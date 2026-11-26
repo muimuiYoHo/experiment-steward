@@ -1,0 +1,20 @@
+# Override for sandboxes where Docker bridge networking cannot route between containers.
+services:
+  postgres:
+    network_mode: host
+  migrate-db:
+    network_mode: host
+    environment:
+      DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/flagsmith
+  flagsmith:
+    network_mode: host
+    ports: !reset []
+    environment:
+      DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/flagsmith
+  flagsmith-task-processor:
+    network_mode: host
+    ports: !reset []
+    environment:
+      DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/flagsmith
+      # task processor also runs gunicorn (health) on 8000; move it to 8001
+      GUNICORN_CMD_ARGS: "--bind=0.0.0.0:8001"

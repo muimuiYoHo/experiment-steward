@@ -71,6 +71,8 @@ export class FakeFlagsmith implements Transport {
       return r(202, null);
     }
     if (method === 'GET' && /results\/$/.test(path)) return r(200, this.results);
+    if (method === 'POST' && /exposures\/refresh\/$/.test(path)) return r(this.throttleRefresh ? 429 : 202, null);
+    if (method === 'GET' && /exposures\/$/.test(path)) return r(200, { exposures: { as_of: null, payload: { excluded_identities: 0 } } });
     if (method === 'POST' && (m = /experiments\/(\d+)\/complete\/$/.exec(path))) {
       Object.assign(exp(m[1]), { status: 'completed', decision: body });
       return r(200, {});

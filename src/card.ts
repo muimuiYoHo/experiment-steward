@@ -8,9 +8,12 @@ import type { ResultsResponse } from './flagsmith.ts';
 const WIDTH = 80;
 
 export function box(title: string, lines: string[]): string {
-  const top = `┌─ ${title} ${'─'.repeat(Math.max(0, WIDTH - title.length - 4))}┐`;
-  const body = lines.flatMap((l) => wrap(l, WIDTH - 2)).map((l) => `│ ${l.padEnd(WIDTH - 2)} │`);
-  return [top, ...body, `└${'─'.repeat(WIDTH)}┘`].join('\n');
+  // Wide enough for the longest line (e.g. the results table), within reason.
+  const longest = Math.max(...lines.map((l) => [...l].length), [...title].length + 4);
+  const width = Math.min(Math.max(WIDTH, longest + 2), 120);
+  const top = `┌─ ${title} ${'─'.repeat(Math.max(0, width - [...title].length - 4))}┐`;
+  const body = lines.flatMap((l) => wrap(l, width - 2)).map((l) => `│ ${l.padEnd(width - 2)} │`);
+  return [top, ...body, `└${'─'.repeat(width)}┘`].join('\n');
 }
 
 function wrap(line: string, width: number): string[] {

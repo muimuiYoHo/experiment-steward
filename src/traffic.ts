@@ -63,23 +63,33 @@ export async function sendTraffic(plan: Plan, opts: TrafficOptions): Promise<Tra
     eventProcessorConfig: { eventsApiUrl: `${opts.apiUrl}/api/` },
   });
   const valueToArm = new Map<string, string>([[plan.flag.controlValue, 'control'], ...plan.variants.map((v) => [v.value, v.key] as [string, string])]);
-  const rand = mulberry32(opts.seed ?? 42);
+  const seed = opts.seed ?? 42;
   const summary: TrafficSummary = { exposures: {}, conversions: {}, unknownValues: 0 };
+  const concurrency = 16;
+  let done = 0;
+  const one = async (i: number) => {
+    const id = identity(opts.prefix, i);
+    const flag = await sdk.getExperimentFlag(plan.flag.name, id); // evaluates + records exposure
+    const arm = valueToArm.get(String(flag.value));
+    if (!arm) {
+      summary.unknownValues++;
+      return;
+    }
+    summary.exposures[arm] = (summary.exposures[arm] ?? 0) + 1;
+    // Per-identity draw: the same identity makes the same simulated choice on every run.
+    if (mulberry32(seed * 100_003 + i)() < opts.rates[arm]) {
+      sdk.trackEvent(plan.metric.event, { identifier: id }); // conversion, same identity
+      summary.conversions[arm] = (summary.conversions[arm] ?? 0) + 1;
+    }
+  };
   try {
-    for (let i = 1; i <= opts.users; i++) {
-      const id = identity(opts.prefix, i);
-      const flag = await sdk.getExperimentFlag(plan.flag.name, id); // evaluates + records exposure
-      const arm = valueToArm.get(String(flag.value));
-      if (!arm) {
-        summary.unknownValues++;
-        continue;
-      }
-      summary.exposures[arm] = (summary.exposures[arm] ?? 0) + 1;
-      if (rand() < opts.rates[arm]) {
-        sdk.trackEvent(plan.metric.event, { identifier: id }); // conversion, same identity
-        summary.conversions[arm] = (summary.conversions[arm] ?? 0) + 1;
-      }
-      if (i % 25 === 0 || i === opts.users) opts.onProgress?.(i, opts.users);
+    for (let start = 1; start <= opts.users; start += concurrency) {
+      const batch: Promise<void>[] = [];
+      for (let i = start; i < start + concurrency && i <= opts.users; i++) batch.push(one(i));
+      await Promise.all(batch);
+      const before = done;
+      done = Math.min(opts.users, start + concurrency - 1);
+      if (Math.floor(done / 100) > Math.floor(before / 100) || done === opts.users) opts.onProgress?.(done, opts.users);
     }
     await sdk.flushEvents();
   } finally {

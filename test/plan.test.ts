@@ -45,3 +45,11 @@ test('plan hash ignores key order but changes with any edit', () => {
   assert.notEqual(planHash(p), planHash(edited));
   assert.equal(approvalCode(p).length, 6);
 });
+
+test('approval cards widen to fit the results table instead of wrapping it', async () => {
+  const { box } = await import('../src/card.ts');
+  const wide = 'x'.repeat(100);
+  const lines = box('t', [wide]).split('\n');
+  assert.equal(lines.length, 3);
+  assert.ok(lines[1].includes(wide));
+});

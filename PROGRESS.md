@@ -12,7 +12,7 @@ Times are Asia/Tokyo (JST).
 - 2026-11-26 12:16 Demo take 1 recorded. Issues found: browser stalls, glyphs rendering as tofu, small font, and an inconclusive result at n=800 (correctly blocked from shipping). Fixed for take 2.
 
 ## In progress
-- Demo take 2 recording, then edit to mp4 (2–3 minutes) in ../demo/.
+- 2026-11-26 12:35 Demo take 3 recording (takes 1–2 kept in ../demo/raw-take*; take 2 had a good result but older card layout). Then edit to mp4 (2–3 minutes) with ../demo/edit.py.
 
 ## Blockers
 - None. Still needed from the user: push to GitHub, upload the video, submit on WeMakeDevs.

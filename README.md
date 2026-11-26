@@ -23,7 +23,7 @@ plan ──► APPROVE 1 ──► apply ──► APPROVE 2 ──► start ─
                         started)
 ```
 
-Demo video: about 2½ minutes, a screen recording of a real run against a local Flagsmith. It is attached to the submission; see [demo-video/](demo-video/README.md) for how it was recorded.
+Demo video (about 2½ minutes, a screen recording of a real run against a local Flagsmith): [experiment-steward-demo.mp4](https://github.com/muimuiYoHo/experiment-steward/releases/download/v0.1.0-demo/experiment-steward-demo.mp4). See [demo-video/](demo-video/README.md) for how it was recorded.
 
 ## Why
 

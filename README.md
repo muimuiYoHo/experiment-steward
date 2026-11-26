@@ -23,7 +23,7 @@ plan ──► APPROVE 1 ──► apply ──► APPROVE 2 ──► start ─
                         started)
 ```
 
-Demo video: see the submission (2–3 minutes, screen recording of a real run against a local Flagsmith).
+Demo video: about 2½ minutes, a screen recording of a real run against a local Flagsmith. It is attached to the submission; see [demo-video/](demo-video/README.md) for how it was recorded.
 
 ## Why
 

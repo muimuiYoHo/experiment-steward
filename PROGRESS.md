@@ -11,11 +11,14 @@ Times are Asia/Tokyo (JST).
 - 2026-11-26 12:06 README: problem, safety model, how Flagsmith is used (endpoint table), setup, commands, how to read results, limitations, AI-assistance statement.
 - 2026-11-26 12:16 Demo take 1 recorded. Issues found: browser stalls, glyphs rendering as tofu, small font, and an inconclusive result at n=800 (correctly blocked from shipping). Fixed for take 2.
 
+## Done (continued)
+- 2026-11-26 12:50 Demo take 3 recorded (real winner: buy_now, 1,560 identities, >99% chance to be best) and edited: ../demo/experiment-steward-demo.mp4, 2:39, 1080p. Frames checked for legibility and content.
+
 ## In progress
-- 2026-11-26 12:35 Demo take 3 recording (takes 1–2 kept in ../demo/raw-take*; take 2 had a good result but older card layout). Then edit to mp4 (2–3 minutes) with ../demo/edit.py.
+- Nothing.
 
 ## Blockers
-- None. Still needed from the user: push to GitHub, upload the video, submit on WeMakeDevs.
+- None. Needs the owner: push the repo, upload the video, submit on WeMakeDevs.
 
 ## Next
-- Edit and verify the video; final README check; final commit.
+- After pushing, run the README steps once on a clean machine if time allows.
